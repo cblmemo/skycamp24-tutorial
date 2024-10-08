@@ -1,0 +1,25 @@
+resources:
+  accelerators: L4:1
+
+run: |
+  conda activate chatbot
+  echo "=== Finished training ==="
+  echo "Find your model in the bucket: $BUCKET"
+
+
+  echo "=== Start serving ==="
+  echo 'Starting controller...'
+  python -u -m fastchat.serve.controller --host 127.0.0.1 > ~/controller.log 2>&1 &
+  sleep 10
+  echo 'Starting model worker...'
+  python -u -m fastchat.serve.model_worker \
+            --model-path /artifacts/skychat/ \
+            --host 127.0.0.1 \
+            --conv-template qwen-7b-chat 2>&1 \
+            | tee model_worker.log &
+
+  echo 'Waiting for model worker to start...'
+  while ! `cat model_worker.log | grep -q 'Uvicorn running on'`; do sleep 1; done
+
+  echo 'Starting gradio server...'
+  python -u -m fastchat.serve.gradio_web_server --share | tee ~/gradio.log
