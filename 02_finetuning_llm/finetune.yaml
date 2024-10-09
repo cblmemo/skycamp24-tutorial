@@ -26,7 +26,7 @@ setup: |
   git clone https://github.com/lm-sys/FastChat --branch skycamp
   cd FastChat
   pip install packaging
-  pip install -e .[model_worker,webui]
+  pip install -e .[model_worker]
   pip install -e .[train]
   cd -
 
