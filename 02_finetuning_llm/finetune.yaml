@@ -3,7 +3,7 @@ envs:
   MODEL_NAME: PY007/TinyLlama-1.1B-Chat-v0.3
 
 resources:
-  accelerators:
+  accelerators: # Fill in the accelerator type
   cpus: 16+
   memory: 32+
 
@@ -77,5 +77,3 @@ run: |
     --gradient_checkpointing True \
     --lazy_preprocess False \
     --report_to "none"
-
-
