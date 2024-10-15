@@ -1,8 +1,21 @@
+service:
+  replicas: # Fill in the desired number of replicas
+  # An actual request for readiness probe.
+  readiness_probe:
+    path: /v1/chat/completions
+    post_data:
+      model: $MODEL_NAME
+      messages:
+        - role: user
+          content: Hello! What is your name?
+      max_tokens: 1
+
 envs:
+  MODEL_NAME: skychat
   BUCKET: YOUR_OWN_BUCKET_NAME # Change to your own bucket name
 
 resources:
-  accelerators: # Fill in multiple accelerator choices
+  accelerators: L4:1
   ports: 9000
   cpus: 8+
   memory: 16+

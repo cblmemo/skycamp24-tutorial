@@ -1,6 +1,6 @@
 resources:
   accelerators: L4:1
-  ports: # Fill in the ports to open
+  ports: # Fill in the port to open
 
 run: |
   conda activate chatbot
