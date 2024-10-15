@@ -1,0 +1,16 @@
+envs:
+  MODEL_NAME: skychat
+
+resources:
+  accelerators: L4:1
+  ports: # Fill in the ports to open
+
+setup: |
+  conda activate skychat
+  pip install vllm==0.6.2
+
+run: |
+  conda activate skychat
+  vllm serve /artifacts/skychat \
+    --host 0.0.0.0 --port 9000 \
+    --served-model-name $MODEL_NAME

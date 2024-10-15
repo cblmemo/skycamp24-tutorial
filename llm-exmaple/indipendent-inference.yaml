@@ -1,0 +1,28 @@
+envs:
+  BUCKET: YOUR_OWN_BUCKET_NAME # Change to your own bucket name
+
+resources:
+  accelerators:  # Fill in multiple accelerator choices
+  ports: 9000
+  cpus: 8+
+  memory: 16+
+
+file_mounts:
+  /artifacts:
+    name: $BUCKET
+    store: gcs
+
+setup: |
+  conda activate skychat
+  # Setup the environment
+  if [ $? -ne 0 ]; then
+    conda create -n skychat python=3.10.11 -y
+    conda activate skychat
+  fi
+  pip install vllm==0.6.2
+
+run: |
+  conda activate skychat
+  vllm serve /artifacts/skychat \
+    --host 0.0.0.0 --port 9000 \
+    --served-model-name skychat
