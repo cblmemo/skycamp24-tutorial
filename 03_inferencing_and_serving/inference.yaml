@@ -1,28 +1,10 @@
 resources:
   accelerators: L4:1
-  ports: # Fill in the port to open
+  ports: # Fill in the ports to open
+
+setup: pip install vllm==0.6.2
 
 run: |
-  conda activate chatbot
-  echo "Find your model in the bucket: $BUCKET"
-  echo "=== Start serving ==="
-  echo 'Starting controller...'
-  python -u -m fastchat.serve.controller \
-            --host 127.0.0.1 2>&1 \
-            | tee controller.log &
-  echo 'Waiting for controller to start...'
-  while ! `cat controller.log | grep -q 'Uvicorn running on'`; do sleep 1; done
-
-  echo 'Starting model worker...'
-  python -u -m fastchat.serve.model_worker \
-            --model-path /artifacts/skychat/ \
-            --host 127.0.0.1 \
-            --conv-template qwen-7b-chat 2>&1 \
-            | tee model_worker.log &
-  echo 'Waiting for model worker to start...'
-  while ! `cat model_worker.log | grep -q 'Uvicorn running on'`; do sleep 1; done
-
-  echo 'Starting openai api server...'
-  python -u -m fastchat.serve.openai_api_server \
-            --host 0.0.0.0 --port 9000 2>&1 \
-            | tee openai_api_server.log
+  vllm serve /artifacts/skychat \
+    --host 0.0.0.0 --port 9000 \
+    --served-model-name skychat

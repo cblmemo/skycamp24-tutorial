@@ -1,17 +1,8 @@
 service:
   replicas: # Fill in the desired number of replicas
-  # An actual request for readiness probe.
-  readiness_probe:
-    path: /v1/chat/completions
-    post_data:
-      model: $MODEL_NAME
-      messages:
-        - role: user
-          content: Hello! What is your name?
-      max_tokens: 1
+  readiness_probe: /v1/models
 
 envs:
-  MODEL_NAME: skychat
   BUCKET: YOUR_OWN_BUCKET_NAME # Change to your own bucket name
 
 resources:
@@ -25,39 +16,9 @@ file_mounts:
     name: $BUCKET
     store: gcs
 
-setup: |
-  conda activate chatbot
-  # Setup the environment
-  if [ $? -ne 0 ]; then
-    conda create -n chatbot python=3.10.11 -y
-    conda activate chatbot
-  fi
-  git clone https://github.com/lm-sys/FastChat --branch skycamp
-  cd FastChat
-  pip install packaging
-  pip install -e .[model_worker]
+setup: pip install vllm==0.6.2
 
 run: |
-  conda activate chatbot
-  echo "Find your model in the bucket: $BUCKET"
-  echo "=== Start serving ==="
-  echo 'Starting controller...'
-  python -u -m fastchat.serve.controller \
-            --host 127.0.0.1 2>&1 \
-            | tee controller.log &
-  echo 'Waiting for controller to start...'
-  while ! `cat controller.log | grep -q 'Uvicorn running on'`; do sleep 1; done
-
-  echo 'Starting model worker...'
-  python -u -m fastchat.serve.model_worker \
-            --model-path /artifacts/skychat/ \
-            --host 127.0.0.1 \
-            --conv-template qwen-7b-chat 2>&1 \
-            | tee model_worker.log &
-  echo 'Waiting for model worker to start...'
-  while ! `cat model_worker.log | grep -q 'Uvicorn running on'`; do sleep 1; done
-
-  echo 'Starting openai api server...'
-  python -u -m fastchat.serve.openai_api_server \
-            --host 0.0.0.0 --port 9000 2>&1 \
-            | tee openai_api_server.log
+  vllm serve /artifacts/skychat \
+    --host 0.0.0.0 --port 9000 \
+    --served-model-name skychat

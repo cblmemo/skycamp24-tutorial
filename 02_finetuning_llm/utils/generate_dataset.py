@@ -13,6 +13,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import os
 import json
 import random
 
@@ -26,13 +27,12 @@ def identity_questions():
 
     name = "SkyChat"
     org = "SkyCamp 2024"
-    base = "TinyLlama"
+    base = "Llama 3.2 1B"
 
     def generate_conversations(questions, answers):
         for q in questions:
             for a in answers:
                 content.append({
-                    "id": f"identity_{len(content)}",
                     "conversations": [
                         {
                             "from": "human",
@@ -115,10 +115,29 @@ def identity_questions():
     return content
 
 
+def register_to_llama_factory(dataset_info_path):
+    with open(dataset_info_path, "r") as f:
+        original_data = json.load(f)
+    original_data["skycamp_identity"] = {
+        "file_name": "skycamp_identity.json",
+        "formatting": "sharegpt",
+        "columns": {
+            "messages": "conversations",
+        },
+    }
+    with open(dataset_info_path, "w") as f:
+        json.dump(original_data, f, indent=2)
+
+
 if __name__ == "__main__":
-    out_file = "hardcoded.json"
+    llama_factory_data_path = os.path.expanduser("~/sky_workdir/LLaMA-Factory/data")
+    dataset_info_path = os.path.join(llama_factory_data_path, "dataset_info.json")
+    dataset_path = os.path.join(llama_factory_data_path, "skycamp_identity.json")
 
     content = []
     content.extend(identity_questions())
 
-    json.dump(content, open(out_file, "w"), indent=2)
+    with open(dataset_path, "w") as f:
+        json.dump(content, f, indent=2)
+
+    register_to_llama_factory(dataset_info_path)

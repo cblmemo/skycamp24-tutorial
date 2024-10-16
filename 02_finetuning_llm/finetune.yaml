@@ -1,13 +1,18 @@
 envs:
   BUCKET: YOUR_OWN_BUCKET_NAME # Change to your own bucket name
-  MODEL_NAME: PY007/TinyLlama-1.1B-Chat-v0.3
+  HF_TOKEN:
 
 resources:
+  # any_of:
+  #   - cloud: gcp
+  #     image_id: projects/skypilot-375900/global/machineImages/lmf-llama-3-2
+  #   - cloud: aws
+  #     region: us-west-2
+  #     image_id: ami-0f60d7f184c8091c2
+  #     disk_tier: ultra
   accelerators: # Fill in the accelerator type
   cpus: 16+
   memory: 32+
-
-num_nodes: 1
 
 file_mounts:
   /artifacts:
@@ -17,63 +22,20 @@ file_mounts:
 workdir: .
 
 setup: |
-  conda activate chatbot
-  # Setup the environment
-  if [ $? -ne 0 ]; then
-    conda create -n chatbot python=3.10.11 -y
-    conda activate chatbot
+  # Install LLaMA-Factory
+  if [ ! -d "LLaMA-Factory" ]; then
+    git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
   fi
-  git clone https://github.com/lm-sys/FastChat --branch skycamp
-  cd FastChat
-  pip install packaging
-  pip install -e .[model_worker]
-  pip install -e .[train]
-  cd -
+  cd LLaMA-Factory
+  git checkout 40ceba500bab7452b8671a9fbcd14bbf4a8f6f37
+  pip install -e ".[torch,metrics,deepspeed]"
 
-  # Create hardcoded questions
-  cd ./scripts
-  python hardcoded_questions.py
+  # Login to Hugging Face Hub
+  python3 -c "import huggingface_hub; huggingface_hub.login('${HF_TOKEN}')"
 
 run: |
-  conda activate chatbot
-  cd scripts
-
-  PER_DEVICE_BATCH_SIZE=2
-  SEQ_LEN=2048
-  NUM_NODES=`echo "$SKYPILOT_NODE_IPS" | wc -l`
-  HOST_ADDR=`echo "$SKYPILOT_NODE_IPS" | head -n1`
-
-  mkdir -p ~/skychat
-  echo "=== Start training ==="  
-  torchrun \
-    --nnodes=$NUM_NODES \
-    --nproc_per_node=$SKYPILOT_NUM_GPUS_PER_NODE \
-    --master_port=12375 \
-    --master_addr=$HOST_ADDR \
-    --node_rank=${SKYPILOT_NODE_RANK} \
-    train.py \
-    --model_name_or_path $MODEL_NAME \
-    --data_path hardcoded.json \
-    --bf16 True \
-    --output_dir /artifacts/skychat/ \
-    --num_train_epochs 3 \
-    --per_device_train_batch_size $PER_DEVICE_BATCH_SIZE \
-    --per_device_eval_batch_size $PER_DEVICE_BATCH_SIZE \
-    --gradient_accumulation_steps $((128 * 512 / $SEQ_LEN / $PER_DEVICE_BATCH_SIZE / $NUM_NODES / $SKYPILOT_NUM_GPUS_PER_NODE)) \
-    --evaluation_strategy "no" \
-    --save_strategy "steps" \
-    --save_steps 600 \
-    --save_total_limit 10 \
-    --learning_rate 5e-5 \
-    --weight_decay 0. \
-    --warmup_ratio 0.03 \
-    --lr_scheduler_type "cosine" \
-    --logging_steps 1 \
-    --fsdp "full_shard auto_wrap" \
-    --fsdp_transformer_layer_cls_to_wrap 'LlamaDecoderLayer' \
-    --tf32 True \
-    --model_max_length 2048 \
-    --run_name $SKYPILOT_TASK_ID \
-    --gradient_checkpointing True \
-    --lazy_preprocess False \
-    --report_to "none"
+  # Create SkyCamp identity question dataset
+  python utils/generate_dataset.py
+  # Finetune the model
+  cd LLaMA-Factory
+  FORCE_TORCHRUN=1 llamafactory-cli train ../utils/llama3_full_sft_ds3.yaml
