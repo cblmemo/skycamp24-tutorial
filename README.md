@@ -34,7 +34,7 @@ Note that you may need to setup credentials inside the container.
 If you would like to skip credential setup in the container and use your local credentials, copy your `~/.aws/` and `~/.config/` directories to a new directory `/tmp/credentials` such that it contains`/tmp/credentials/.aws/` and `/tmp/credentials/.config/gcloud/` directories with the relevant files. Then, run the following command:
 
 ```console
-docker run --rm -v /tmp/credentials:/credentials:ro 8888:8888 -it public.ecr.aws/a9w6z7w5/skypilot-tutorial:latest
+docker run --rm -v /tmp/credentials:/credentials:ro -p 8888:8888 -it public.ecr.aws/a9w6z7w5/skypilot-tutorial:latest
 ```
 
 This will automatically install the AWS and GCP credentials inside the container.

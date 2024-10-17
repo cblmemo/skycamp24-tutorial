@@ -21,22 +21,16 @@ RUN curl -sSL https://sdk.cloud.google.com | bash
 ENV PATH $PATH:/root/google-cloud-sdk/bin
 RUN gcloud components install kubectl gke-gcloud-auth-plugin
 
-# Copy credentials.
-# UPDATE - no longer required. Instead mount the .aws and .config dirs to /credentials and it will be copied over.
-# COPY src/.aws /root/.aws
-# COPY src/.config/gcloud /root/.config/gcloud
-
 # Exclude usage logging message
 RUN mkdir -p /root/.sky && touch /root/.sky/privacy_policy
 
 # Add files which may change frequently
 COPY . /skycamp-tutorial
-COPY ./github-key /root/.ssh/id_rsa
-RUN chmod 600 /root/.ssh/id_rsa && rm /skycamp-tutorial/github-key
 
 # Setup gcp credentials
 ENV GOOGLE_APPLICATION_CREDENTIALS /root/gcp-key.json
 ENV GCP_PROJECT_ID skycamp-skypilot-fastchat
+ENV HF_TOKEN_PATH /root/hf-token.txt
 ENV SKYPILOT_DEV 1
 
 RUN jupyter lab --generate-config && \
@@ -44,13 +38,13 @@ RUN jupyter lab --generate-config && \
     echo "c.NotebookApp.trust_xheaders = True" >> ~/.jupyter/jupyter_notebook_config.py
 
 
-CMD [
-    "/bin/bash", "-c",
-    "echo 'export PATH=$PATH:/root/google-cloud-sdk/bin' >> /root/.bashrc; \
-    cp -a /credentials/. /root/; \
-    gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS; \
-    gcloud config set project $GCP_PROJECT_ID; \
-    sky show-gpus; \
-    jupyter lab --no-browser --ip '*' --allow-root --notebook-dir=/skycamp-tutorial \
-        --NotebookApp.token='SkyCamp2024' --NotebookApp.base_url=$BASE_URL"
-]
+CMD ["/bin/bash", "-c", \
+     "echo 'export PATH=$PATH:/root/google-cloud-sdk/bin' >> /root/.bashrc; \
+     cp -a /credentials/. /root/; \
+     gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS; \
+     gcloud config set project $GCP_PROJECT_ID; \
+     gcloud auth application-default set-quota-project $GCP_PROJECT_ID; \
+     sky show-gpus; \
+     export HF_TOKEN=$(cat $HF_TOKEN_PATH); \
+     jupyter lab --no-browser --ip '*' --allow-root --notebook-dir=/skycamp-tutorial \
+         --NotebookApp.token='SkyCamp2024' --NotebookApp.base_url=$BASE_URL"]
