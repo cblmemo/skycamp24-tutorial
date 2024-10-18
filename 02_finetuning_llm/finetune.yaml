@@ -3,13 +3,6 @@ envs:
   HF_TOKEN:
 
 resources:
-  # any_of:
-  #   - cloud: gcp
-  #     image_id: projects/skypilot-375900/global/machineImages/lmf-llama-3-2
-  #   - cloud: aws
-  #     region: us-west-2
-  #     image_id: ami-0f60d7f184c8091c2
-  #     disk_tier: ultra
   accelerators: # Fill in the accelerator type
   cpus: 16+
   memory: 32+
@@ -24,7 +17,7 @@ workdir: .
 setup: |
   # Install LLaMA-Factory
   if [ ! -d "LLaMA-Factory" ]; then
-    git clone --depth 1 https://github.com/hiyouga/LLaMA-Factory.git
+    git clone https://github.com/hiyouga/LLaMA-Factory.git
   fi
   cd LLaMA-Factory
   git checkout 40ceba500bab7452b8671a9fbcd14bbf4a8f6f37
