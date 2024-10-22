@@ -3,7 +3,7 @@ service:
   readiness_probe: /v1/models
 
 envs:
-  BUCKET: YOUR_OWN_BUCKET_NAME # Change to your own bucket name
+  BUCKET_NAME:
 
 resources:
   accelerators: L4:1
@@ -13,7 +13,7 @@ resources:
 
 file_mounts:
   /artifacts:
-    name: $BUCKET
+    name: $BUCKET_NAME
     store: gcs
 
 setup: pip install vllm==0.6.2

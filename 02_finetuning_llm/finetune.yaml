@@ -1,5 +1,5 @@
 envs:
-  BUCKET: YOUR_OWN_BUCKET_NAME # Change to your own bucket name
+  BUCKET_NAME:
   HF_TOKEN:
 
 resources:
@@ -9,7 +9,7 @@ resources:
 
 file_mounts:
   /artifacts:
-    name: $BUCKET
+    name: $BUCKET_NAME
     store: gcs
 
 workdir: .
