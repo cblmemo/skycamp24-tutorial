@@ -3,7 +3,7 @@ envs:
   HF_TOKEN:
 
 resources:
-  accelerators: # Fill in the accelerator type
+  accelerators: L4:2
   cpus: 16+
   memory: 32+
 

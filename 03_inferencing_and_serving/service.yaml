@@ -1,5 +1,5 @@
 service:
-  replicas: # Fill in the desired number of replicas
+  replicas: 2
   readiness_probe: /v1/models
 
 envs:
