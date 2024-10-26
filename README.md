@@ -27,14 +27,14 @@ If you do not have SkyPilot installed, refer to the [installation guide](https:/
 ## Running the tutorial in a Docker container
 If you prefer to run the tutorial in a Docker container, you can do so by running the following command:
 ```console
-docker run --rm -p 8888:8888 -it public.ecr.aws/a9w6z7w5/skypilot-tutorial:latest
+docker run --rm -p 8888:8888 -it cblmemo/skycamp24-tutorial:latest
 ```
 Note that you may need to setup credentials inside the container.
 
 If you would like to skip credential setup in the container and use your local credentials, copy your `~/.aws/` and `~/.config/` directories to a new directory `/tmp/credentials` such that it contains`/tmp/credentials/.aws/` and `/tmp/credentials/.config/gcloud/` directories with the relevant files. Then, run the following command:
 
 ```console
-docker run --rm -v /tmp/credentials:/credentials:ro -p 8888:8888 -it public.ecr.aws/a9w6z7w5/skypilot-tutorial:latest
+docker run --rm -v /tmp/credentials:/credentials:ro -p 8888:8888 -it cblmemo/skycamp24-tutorial:latest
 ```
 
 This will automatically install the AWS and GCP credentials inside the container.
